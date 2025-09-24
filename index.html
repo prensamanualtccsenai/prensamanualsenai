@@ -1,0 +1,727 @@
+<!DOCTYPE html>
+<html lang="pt-BR" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Prensa Manual de Baixo Custo | TCC Gustavo A. de Oliveira</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script type="importmap">
+        {
+            "imports": {
+                "three": "https://cdn.jsdelivr.net/npm/three@0.163.0/build/three.module.js",
+                "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.163.0/examples/jsm/"
+            }
+        }
+    </script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --senai-orange: #F37021;
+            --senai-blue: #00469B;
+            --senai-gray-dark: #333333;
+            --senai-gray-light: #F2F2F2;
+        }
+        body {
+            font-family: 'Poppins', sans-serif;
+            color: var(--senai-gray-dark);
+        }
+        .bg-senai-blue { background-color: var(--senai-blue); }
+        .text-senai-blue { color: var(--senai-blue); }
+        .bg-senai-orange { background-color: var(--senai-orange); }
+        .text-senai-orange { color: var(--senai-orange); }
+        .border-senai-orange { border-color: var(--senai-orange); }
+        
+        .chart-container {
+            position: relative;
+            height: 400px;
+            width: 100%;
+        }
+        .nav-link {
+            position: relative;
+            color: var(--senai-gray-dark);
+            transition: color 0.3s;
+        }
+        .nav-link:hover {
+            color: var(--senai-orange);
+        }
+        .nav-link::after {
+            content: '';
+            position: absolute;
+            width: 0;
+            height: 2px;
+            bottom: -5px;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: var(--senai-orange);
+            transition: width 0.3s;
+        }
+        .nav-link.active::after, .nav-link:hover::after {
+            width: 100%;
+        }
+        .game-piece { touch-action: none; user-select: none; }
+        .drop-zone { border: 2px dashed #9ca3af; }
+        .drop-zone.hover { border-color: var(--senai-orange); background-color: #feedde; }
+        .drop-zone.dropped { border-style: solid; border-color: #16a34a; background-color: #dcfce7; }
+        #quiz-box { min-height: 450px; }
+        .quiz-option { cursor: pointer; border: 2px solid transparent; transition: all 0.3s; }
+        .quiz-option:hover { border-color: var(--senai-orange); background-color: #feedde; }
+        .quiz-option.selected { border-color: var(--senai-blue); }
+        .quiz-option.correct { background-color: #dcfce7; border-color: #16a34a; }
+        .quiz-option.incorrect { background-color: #fee2e2; border-color: #ef4444; }
+        #progress-bar-inner { transition: width 0.5s ease-in-out; }
+    </style>
+</head>
+<body class="bg-senai-gray-light">
+
+    <!-- Header & Navegação -->
+    <header id="header" class="bg-white shadow-md sticky top-0 z-50">
+        <div class="container mx-auto px-6 py-4 flex justify-between items-center">
+            <div class="flex items-center space-x-2">
+                 <svg class="h-8 w-auto text-senai-orange" xmlns="http://www.w.3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M21 7.5l-9-5.25L3 7.5m18 0l-9 5.25m9-5.25v9l-9 5.25M3 7.5l9 5.25M3 7.5v9l9 5.25m0-9v9" /></svg>
+                 <h1 class="text-xl md:text-2xl font-bold text-senai-blue">Prensa Manual TCC</h1>
+            </div>
+            <nav class="hidden md:flex space-x-8 items-center">
+                <a href="#inicio" class="nav-link">Início</a>
+                <a href="#projeto" class="nav-link">O Projeto</a>
+                <a href="#infograficos" class="nav-link">Infográficos</a>
+                <a href="#jogo" class="nav-link">Game 2D</a>
+                <a href="#jogo-3d" class="nav-link">Game 3D</a>
+                <a href="#quiz" class="nav-link">Quiz</a>
+                <a href="#comentarios" class="nav-link">Comentários</a>
+            </nav>
+            <button id="mobile-menu-button" class="md:hidden text-senai-blue">
+                <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="4" x2="20" y1="12" y2="12"/><line x1="4" x2="20" y1="6" y2="6"/><line x1="4" x2="20" y1="18" y2="18"/></svg>
+            </button>
+        </div>
+        <div id="mobile-menu" class="hidden md:hidden bg-white border-t">
+            <a href="#inicio" class="block py-3 px-6 text-sm hover:bg-senai-gray-light">Início</a>
+            <a href="#projeto" class="block py-3 px-6 text-sm hover:bg-senai-gray-light">O Projeto</a>
+            <a href="#infograficos" class="block py-3 px-6 text-sm hover:bg-senai-gray-light">Infográficos</a>
+            <a href="#jogo" class="block py-3 px-6 text-sm hover:bg-senai-gray-light">Game 2D</a>
+            <a href="#jogo-3d" class="block py-3 px-6 text-sm hover:bg-senai-gray-light">Game 3D</a>
+            <a href="#quiz" class="block py-3 px-6 text-sm hover:bg-senai-gray-light">Quiz</a>
+            <a href="#comentarios" class="block py-3 px-6 text-sm hover:bg-senai-gray-light">Comentários</a>
+        </div>
+    </header>
+
+    <main>
+        <!-- Seção Início -->
+        <section id="inicio" class="container mx-auto px-6 py-20 md:py-28 text-center">
+            <h2 class="text-3xl md:text-5xl font-bold mb-4 text-senai-blue">Desenvolvimento de Prensa Manual de Baixo Custo</h2>
+            <p class="text-lg md:text-xl text-gray-600 max-w-3xl mx-auto mb-8">Uma solução inovadora e acessível para a indústria de calçados, eliminando a dependência de sistemas pneumáticos caros e otimizando a produção artesanal e de pequena escala.</p>
+            <a href="#projeto" class="bg-senai-orange text-white font-bold py-3 px-8 rounded-full hover:opacity-90 transition-opacity duration-300 inline-block transform hover:scale-105">Conheça o Projeto</a>
+            <div class="mt-12 bg-white p-6 rounded-lg shadow-xl max-w-4xl mx-auto">
+                <div class="grid md:grid-cols-2 gap-8 text-left">
+                    <div class="flex flex-col justify-center">
+                        <h3 class="text-2xl font-bold text-senai-blue mb-4">Firjan SENAI Friburgo</h3>
+                        <p class="text-gray-700"><strong>Endereço:</strong><br>Rua Prefeito Eugênio Muller, nº 220<br>Centro, Nova Friburgo - RJ<br>CEP: 28610-010</p>
+                        <p class="text-gray-700 mt-4"><strong>Horário de Funcionamento:</strong><br>Segunda a Sexta: 07:00 às 22:00</p>
+                    </div>
+                    <div class="rounded-lg overflow-hidden h-64 md:h-auto">
+                        <iframe
+                            width="100%"
+                            height="100%"
+                            frameborder="0" style="border:0"
+                            src="https://maps.google.com/maps?q=Rua%20Prefeito%20Eug%C3%AAnio%20Muller,%20220,%20Nova%20Friburgo,%20RJ&t=k&z=17&ie=UTF8&iwloc=&output=embed"
+                            allowfullscreen>
+                        </iframe>
+                    </div>
+                </div>
+                 <p class="text-center text-sm text-senai-blue font-semibold mt-4 bg-senai-gray-light p-2 rounded">
+                    <strong>Local do Curso:</strong> Técnico em Mecânica </br> 
+			<strong>Alunos: </strong>Gustavo Alves | Gabriel Lima | Alexandre Cardoso | Miguel Campista | Richard Conceição
+                </p>
+            </div>
+        </section>
+
+        <!-- Seção O Projeto -->
+        <section id="projeto" class="bg-white py-20 md:py-28">
+            <div class="container mx-auto px-6">
+                <div class="text-center mb-16">
+                    <h2 class="text-3xl md:text-4xl font-bold text-senai-blue">O Projeto em Detalhes</h2>
+                    <p class="text-gray-600 mt-2">Da identificação do problema à solução proposta e seus benefícios.</p>
+                </div>
+                 <div class="grid md:grid-cols-2 gap-12 items-center">
+                    <div>
+                        <h3 class="text-2xl font-bold mb-4 text-senai-orange">O Problema</h3>
+                        <p class="text-gray-600 mb-6">A indústria de calçados, especialmente a artesanal, enfrenta altos custos operacionais e de manutenção com prensas pneumáticas, que dependem de compressores de ar. Falhas nesses sistemas causam paradas na produção, afetando a produtividade e tornando a tecnologia inacessível para pequenos produtores.</p>
+                        <h3 class="text-2xl font-bold mb-4 text-senai-orange">A Solução Proposta</h3>
+                        <p class="text-gray-600">Desenvolver uma prensa manual de baixo custo que utiliza um sistema de alavanca e fuso. Este design robusto e simples elimina a necessidade de energia elétrica ou ar comprimido, oferecendo uma alternativa eficiente e econômica.</p>
+                    </div>
+                    <div class="bg-senai-gray-light p-8 rounded-lg shadow-lg border-t-4 border-senai-blue">
+                        <h3 class="text-2xl font-bold mb-4 text-center">Benefícios Esperados</h3>
+                        <ul class="space-y-4">
+                            <li class="flex items-start"><span class="text-green-500 mr-3 mt-1">✔</span><span><strong>Redução de Custos:</strong> Eliminação de gastos com energia e manutenção de compressores.</span></li>
+                            <li class="flex items-start"><span class="text-green-500 mr-3 mt-1">✔</span><span><strong>Sustentabilidade:</strong> Operação limpa, sem consumo de energia elétrica.</span></li>
+                            <li class="flex items-start"><span class="text-green-500 mr-3 mt-1">✔</span><span><strong>Acessibilidade:</strong> Solução viável e de baixo custo para pequenos produtores e artesãos.</span></li>
+                            <li class="flex items-start"><span class="text-green-500 mr-3 mt-1">✔</span><span><strong>Qualidade Padronizada:</strong> Garante pressão uniforme, melhorando o acabamento dos calçados.</span></li>
+                            <li class="flex items-start"><span class="text-green-500 mr-3 mt-1">✔</span><span><strong>Aumento da Produtividade:</strong> Reduz paradas de produção por falhas de equipamento.</span></li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Seção Infográficos Dinâmicos -->
+        <section id="infograficos" class="py-20 md:py-28">
+            <div class="container mx-auto px-6">
+                <div class="text-center mb-16">
+                    <h2 class="text-3xl md:text-4xl font-bold text-senai-blue">Indicadores e Análise de Custos</h2>
+                    <p class="text-gray-600 mt-2">Visualização de dados que comprovam a viabilidade do projeto.</p>
+                </div>
+                <div class="grid lg:grid-cols-2 gap-12">
+                    <div class="bg-white p-8 rounded-lg shadow-lg">
+                        <h3 class="text-xl font-bold mb-4 text-center">Comparativo de Custo de Aquisição (R$)</h3>
+                        <div class="chart-container"><canvas id="custoAquisicaoChart"></canvas></div>
+                    </div>
+                    <div class="bg-white p-8 rounded-lg shadow-lg">
+                        <h3 class="text-xl font-bold mb-4 text-center">Composição do Custo do Protótipo</h3>
+                        <div class="chart-container"><canvas id="composicaoCustoChart"></canvas></div>
+                    </div>
+                    <div class="bg-white p-8 rounded-lg shadow-lg">
+                        <h3 class="text-xl font-bold mb-4 text-center">Análise Comparativa de Características</h3>
+                        <div class="chart-container"><canvas id="radarChart"></canvas></div>
+                    </div>
+                     <div class="bg-white p-8 rounded-lg shadow-lg">
+                        <h3 class="text-xl font-bold mb-4 text-center">Detalhamento dos Custos de Mão de Obra</h3>
+                        <div class="chart-container"><canvas id="maoDeObraChart"></canvas></div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Seção Game 2D -->
+        <section id="jogo" class="bg-white py-20 md:py-28">
+            <div class="container mx-auto px-6 text-center">
+                <h2 class="text-3xl md:text-4xl font-bold text-senai-blue mb-4">Game 2D: Monte a Prensa!</h2>
+                <p class="text-gray-600 max-w-2xl mx-auto mb-10">Arraste os componentes para suas posições corretas na estrutura e monte a prensa manual.</p>
+                <div class="flex flex-col lg:flex-row items-center justify-center gap-10">
+                    <div id="game-pieces" class="grid grid-cols-2 gap-4">
+                        <div id="piece-fuso" draggable="true" class="game-piece bg-blue-100 p-4 rounded-lg cursor-grab border-2 border-blue-400 text-center" data-piece="fuso">Fuso e Mancal</div>
+                        <div id="piece-alavanca" draggable="true" class="game-piece bg-green-100 p-4 rounded-lg cursor-grab border-2 border-green-400 text-center" data-piece="alavanca">Alavanca</div>
+                        <div id="piece-base" draggable="true" class="game-piece bg-yellow-100 p-4 rounded-lg cursor-grab border-2 border-yellow-400 text-center" data-piece="base">Base e Plataforma</div>
+                    </div>
+                    <div id="assembly-area" class="relative bg-gray-100 rounded-lg p-4" style="width: 300px; height: 400px;">
+                        <div class="absolute inset-0 flex items-center justify-center"><p class="text-gray-400 font-bold text-4xl select-none">ESTRUTURA "C"</p></div>
+                        <div id="drop-fuso" class="drop-zone absolute rounded" style="top: 20px; left: 125px; width: 50px; height: 280px;" data-piece="fuso"></div>
+                        <div id="drop-alavanca" class="drop-zone absolute rounded" style="top: 50px; right: -10px; width: 100px; height: 40px;" data-piece="alavanca"></div>
+                        <div id="drop-base" class="drop-zone absolute rounded" style="bottom: 20px; left: 50px; width: 200px; height: 60px;" data-piece="base"></div>
+                    </div>
+                </div>
+                <div id="game-feedback" class="mt-8 font-bold text-xl h-8"></div>
+                <button id="reset-game-button" class="mt-4 bg-red-500 text-white font-bold py-2 px-6 rounded-full hover:bg-red-600 transition-colors">Reiniciar</button>
+            </div>
+        </section>
+        
+        <!-- Seção Game 3D -->
+        <section id="jogo-3d" class="py-20 md:py-28">
+            <div class="container mx-auto px-6 text-center">
+                 <h2 class="text-3xl md:text-4xl font-bold text-senai-blue mb-4">Game 3D: Operando a Prensa</h2>
+                <p class="text-gray-600 max-w-2xl mx-auto mb-10">Clique e arraste para girar a prensa. Pressione o botão para ver o mecanismo em ação!</p>
+                <div id="canvas-container" class="relative w-full max-w-3xl mx-auto h-96 bg-white rounded-lg shadow-lg cursor-move"></div>
+                <button id="operate-press-button" class="mt-8 bg-senai-orange text-white font-bold py-3 px-8 rounded-full hover:opacity-90 transition-opacity">ACIONAR PRENSA</button>
+            </div>
+        </section>
+
+        <!-- Seção Quiz -->
+        <section id="quiz" class="bg-white py-20 md:py-28">
+            <div class="container mx-auto px-6 max-w-3xl">
+                <div class="text-center mb-12">
+                    <h2 class="text-3xl md:text-4xl font-bold text-senai-blue">Teste Seus Conhecimentos</h2>
+                    <p class="text-gray-600 mt-2">Um desafio em 3 fases para testar o que você aprendeu.</p>
+                </div>
+                
+                <div id="quiz-area" class="bg-white p-6 md:p-8 rounded-lg shadow-2xl">
+                    <div id="quiz-start-screen">
+                        <h3 class="text-2xl font-bold text-center mb-4">Pronto para o desafio?</h3>
+                        <p class="text-center mb-8">Acerte 70% ou mais para avançar de fase!</p>
+                        <button id="start-quiz-btn" class="w-full bg-senai-orange text-white font-bold py-3 px-8 rounded-full hover:opacity-90 transition-opacity">Começar Fase 1</button>
+                    </div>
+
+                    <div id="quiz-main-screen" class="hidden">
+                        <div class="flex justify-between items-center mb-4">
+                            <div id="quiz-phase" class="font-bold text-senai-blue">Fase 1</div>
+                            <div id="quiz-score" class="font-bold text-senai-orange">Pontos: 0</div>
+                        </div>
+                        <div id="progress-bar" class="w-full bg-gray-200 rounded-full h-2.5 mb-6">
+                            <div id="progress-bar-inner" class="bg-senai-orange h-2.5 rounded-full" style="width: 0%"></div>
+                        </div>
+                        <div id="quiz-box" class="flex flex-col justify-between">
+                            <!-- Content injected by JS -->
+                        </div>
+                        <div class="flex justify-between mt-6">
+                            <button id="quiz-prev-btn" class="bg-gray-300 text-gray-700 font-bold py-2 px-6 rounded-full hover:bg-gray-400 transition-colors">Voltar</button>
+                            <button id="quiz-next-btn" class="bg-senai-blue text-white font-bold py-2 px-6 rounded-full hover:opacity-90 transition-opacity">Prosseguir</button>
+                        </div>
+                    </div>
+
+                    <div id="quiz-end-phase-screen" class="hidden text-center">
+                        <h3 id="end-phase-title" class="text-2xl font-bold mb-4"></h3>
+                        <p id="end-phase-message" class="mb-6"></p>
+                        <div id="end-phase-icon" class="text-6xl mb-6"></div>
+                        <button id="end-phase-action-btn" class="w-full bg-senai-orange text-white font-bold py-3 px-8 rounded-full hover:opacity-90 transition-opacity"></button>
+                    </div>
+                </div>
+            </div>
+        </section>
+        
+        <!-- Seção Comentários -->
+        <section id="comentarios" class="py-20 md:py-28">
+            <div class="container mx-auto px-6 max-w-3xl">
+                <div class="text-center mb-12">
+                    <h2 class="text-3xl md:text-4xl font-bold text-senai-blue">Deixe seu Comentário</h2>
+                    <p class="text-gray-600 mt-2">Sua opinião é muito importante. Compartilhe o que achou do projeto!</p>
+                </div>
+                <div class="bg-white p-8 rounded-lg shadow-lg mb-8">
+                    <form id="comment-form">
+                        <div class="mb-4">
+                            <label for="comment-name" class="block text-sm font-medium text-gray-700 mb-1">Seu Nome</label>
+                            <input type="text" id="comment-name" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-senai-orange" required>
+                        </div>
+                        <div class="mb-4">
+                            <label for="comment-text" class="block text-sm font-medium text-gray-700 mb-1">Seu Comentário</label>
+                            <textarea id="comment-text" rows="4" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-senai-orange" required></textarea>
+                        </div>
+                        <button type="submit" class="w-full bg-senai-blue text-white font-bold py-3 px-8 rounded-full hover:opacity-90 transition-colors">Publicar Comentário</button>
+                    </form>
+                </div>
+                <div id="comments-list" class="space-y-6"></div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-senai-gray-dark text-white py-10">
+        <div class="container mx-auto px-6 text-center">
+            <p>&copy; 2025 - Projeto de TCC: Prensa Manual de Baixo Custo</p>
+            <p class="text-sm text-gray-400 mt-2">Desenvolvido por Gustavo Alves de Oliveira</p>
+        </div>
+    </footer>
+
+    <script type="module">
+        import * as THREE from 'three';
+        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+        document.addEventListener('DOMContentLoaded', () => {
+
+            // --- Lógica do Menu Mobile ---
+            const mobileMenuButton = document.getElementById('mobile-menu-button');
+            const mobileMenu = document.getElementById('mobile-menu');
+            mobileMenuButton.addEventListener('click', () => {
+                mobileMenu.classList.toggle('hidden');
+            });
+
+            // --- Navegação Ativa e Scroll Suave ---
+            const navLinks = document.querySelectorAll('.nav-link');
+            const sections = document.querySelectorAll('main section');
+            
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        navLinks.forEach(link => {
+                            link.classList.toggle('active', link.getAttribute('href').substring(1) === entry.target.id);
+                        });
+                    }
+                });
+            }, { threshold: 0.5 });
+            sections.forEach(section => observer.observe(section));
+
+
+            // --- Lógica dos Infográficos ---
+            const custoAquisicaoCtx = document.getElementById('custoAquisicaoChart')?.getContext('2d');
+            if(custoAquisicaoCtx) new Chart(custoAquisicaoCtx, { type: 'bar', data: { labels: ['Projeto TCC', 'Manual (Mercado)', 'Pneumática (Mercado)'], datasets: [{ label: 'Custo em R$', data: [1560, 2150, 4250], backgroundColor: ['#22c55e', '#3b82f6', '#ef4444'], borderRadius: 5 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true } } } });
+
+            const composicaoCustoCtx = document.getElementById('composicaoCustoChart')?.getContext('2d');
+            if(composicaoCustoCtx) new Chart(composicaoCustoCtx, { type: 'pie', data: { labels: ['Custo de Material (R$ 560)', 'Custo de Mão de Obra (R$ 1000)'], datasets: [{ data: [560, 1000], backgroundColor: ['#f59e0b', '#06b6d4'] }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'top' } } } });
+            
+            const radarCtx = document.getElementById('radarChart')?.getContext('2d');
+            if(radarCtx) new Chart(radarCtx, { type: 'radar', data: { labels: ['Custo Aquisição', 'Custo Operacional', 'Custo Manutenção', 'Complexidade', 'Dependência Externa'], datasets: [ { label: 'Projeto TCC', data: [8, 10, 9, 9, 10], fill: true, backgroundColor: 'rgba(243, 112, 33, 0.2)', borderColor: 'rgb(243, 112, 33)', pointBackgroundColor: 'rgb(243, 112, 33)' }, { label: 'Pneumática (Mercado)', data: [4, 3, 5, 6, 2], fill: true, backgroundColor: 'rgba(0, 70, 155, 0.2)', borderColor: 'rgb(0, 70, 155)', pointBackgroundColor: 'rgb(0, 70, 155)' } ] }, options: { responsive: true, maintainAspectRatio: false, scales: { r: { beginAtZero: true, max: 10 } } } });
+            
+            const maoDeObraCtx = document.getElementById('maoDeObraChart')?.getContext('2d');
+            if(maoDeObraCtx) new Chart(maoDeObraCtx, { type: 'doughnut', data: { labels: ['Usinagem (R$ 320)', 'Soldagem (R$ 240)', 'Corte (R$ 160)', 'Montagem (R$ 160)', 'Acabamento (R$ 120)'], datasets: [{ data: [320, 240, 160, 160, 120], backgroundColor: ['#00469B', '#00AEEF', '#F37021', '#FFC709', '#A7A9AC'] }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'top' } } } });
+
+            // --- Lógica do Game de Montagem 2D ---
+            const pieces = document.querySelectorAll('.game-piece');
+            const dropZones = document.querySelectorAll('.drop-zone');
+            const gameFeedback = document.getElementById('game-feedback');
+            const resetGameButton = document.getElementById('reset-game-button');
+            let completedPieces = 0;
+
+            pieces.forEach(piece => {
+                piece.addEventListener('dragstart', (e) => { e.dataTransfer.setData('text/plain', e.target.dataset.piece); setTimeout(() => piece.classList.add('invisible'), 0); });
+                piece.addEventListener('dragend', () => piece.classList.remove('invisible'));
+            });
+
+            dropZones.forEach(zone => {
+                zone.addEventListener('dragover', (e) => { e.preventDefault(); zone.classList.add('hover'); });
+                zone.addEventListener('dragleave', () => zone.classList.remove('hover'));
+                zone.addEventListener('drop', (e) => {
+                    e.preventDefault();
+                    zone.classList.remove('hover');
+                    const pieceId = e.dataTransfer.getData('text/plain');
+                    if(zone.dataset.piece === pieceId && !zone.classList.contains('dropped')) {
+                        zone.classList.add('dropped');
+                        zone.innerHTML = `<div class="p-2 text-sm text-center font-semibold text-green-800">${document.getElementById('piece-' + pieceId).textContent}</div>`;
+                        document.getElementById('piece-' + pieceId).style.display = 'none';
+                        completedPieces++;
+                        if (completedPieces === 3) {
+                            gameFeedback.textContent = 'Parabéns! Prensa montada com sucesso!';
+                            gameFeedback.classList.add('text-green-600');
+                        } else {
+                           gameFeedback.textContent = 'Peça encaixada!';
+                           gameFeedback.classList.add('text-blue-600');
+                           setTimeout(()=> gameFeedback.textContent = '', 2000);
+                        }
+                    }
+                });
+            });
+            
+            const resetGame = () => {
+                completedPieces = 0;
+                gameFeedback.textContent = '';
+                gameFeedback.classList.remove('text-green-600', 'text-blue-600');
+                dropZones.forEach(zone => { zone.classList.remove('dropped'); zone.innerHTML = ''; });
+                pieces.forEach(piece => piece.style.display = 'block');
+            };
+            resetGameButton.addEventListener('click', resetGame);
+            
+            // --- Lógica do Game 3D ---
+            const container = document.getElementById('canvas-container');
+            const scene = new THREE.Scene();
+            scene.background = new THREE.Color(0xf2f2f2);
+            const camera = new THREE.PerspectiveCamera(75, container.clientWidth / container.clientHeight, 0.1, 1000);
+            camera.position.z = 7;
+            camera.position.y = 3;
+
+            const renderer = new THREE.WebGLRenderer({ antialias: true });
+            renderer.setSize(container.clientWidth, container.clientHeight);
+            container.appendChild(renderer.domElement);
+            
+            const controls = new OrbitControls(camera, renderer.domElement);
+            
+            const ambientLight = new THREE.AmbientLight(0xffffff, 0.8);
+            scene.add(ambientLight);
+            const directionalLight = new THREE.DirectionalLight(0xffffff, 0.6);
+            directionalLight.position.set(5, 10, 7.5);
+            scene.add(directionalLight);
+
+            const pressGroup = new THREE.Group();
+            const material = new THREE.MeshStandardMaterial({ color: 0x555555 });
+            const base = new THREE.Mesh(new THREE.BoxGeometry(6, 0.5, 4), material);
+            base.position.y = -3;
+            const structureC = new THREE.Mesh(new THREE.BoxGeometry(1, 5, 1), material);
+            structureC.position.y = -0.25;
+            structureC.position.x = -2.5;
+            const topArm = new THREE.Mesh(new THREE.BoxGeometry(4, 1, 1), material);
+            topArm.position.y = 2.75;
+            topArm.position.x = -0.5;
+            const bottomArm = new THREE.Mesh(new THREE.BoxGeometry(4, 1, 1), material);
+            bottomArm.position.y = -2.75;
+            bottomArm.position.x = -0.5;
+
+            const fusoMaterial = new THREE.MeshStandardMaterial({ color: 0xaaaaaa });
+            const fuso = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.2, 3.5, 16), fusoMaterial);
+            fuso.position.y = 0.5;
+            
+            const platform = new THREE.Mesh(new THREE.BoxGeometry(3, 0.3, 3), material);
+            platform.position.y = -1.5;
+            fuso.add(platform);
+
+            const leverMaterial = new THREE.MeshStandardMaterial({ color: 0xF37021 });
+            const lever = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.1, 4, 16), leverMaterial);
+            lever.rotation.z = Math.PI / 2;
+            lever.position.x = 2;
+            const leverHandle = new THREE.Mesh(new THREE.SphereGeometry(0.3, 16, 16), leverMaterial);
+            leverHandle.position.y = 2;
+            lever.add(leverHandle);
+            
+            const leverPivot = new THREE.Group();
+            leverPivot.add(lever);
+            leverPivot.position.y = 2.25;
+            fuso.add(leverPivot);
+            
+            pressGroup.add(base, structureC, topArm, bottomArm, fuso);
+            scene.add(pressGroup);
+            
+            let isAnimating = false;
+            document.getElementById('operate-press-button').addEventListener('click', () => {
+                if(isAnimating) return;
+                isAnimating = true;
+                const startY = 0.5;
+                const endY = -0.8;
+                const startAngle = 0;
+                const endAngle = Math.PI * 2;
+                let progress = 0;
+                const duration = 1500; // ms
+                const startTime = Date.now();
+
+                function animatePress() {
+                    const elapsedTime = Date.now() - startTime;
+                    progress = Math.min(elapsedTime / duration, 1);
+                    const easedProgress = 0.5 * (1 - Math.cos(Math.PI * progress)); // Ease in-out
+
+                    // Go down
+                    if (progress < 0.5) {
+                        const downProgress = easedProgress * 2;
+                        fuso.position.y = startY + (endY - startY) * downProgress;
+                        leverPivot.rotation.y = startAngle + (endAngle - startAngle) * downProgress;
+                    } 
+                    // Go up
+                    else {
+                        const upProgress = (easedProgress - 0.5) * 2;
+                        fuso.position.y = endY + (startY - endY) * upProgress;
+                        leverPivot.rotation.y = endAngle + (startAngle - endAngle) * upProgress;
+                    }
+
+                    if (progress < 1) {
+                        requestAnimationFrame(animatePress);
+                    } else {
+                        fuso.position.y = startY;
+                        leverPivot.rotation.y = startAngle;
+                        isAnimating = false;
+                    }
+                }
+                animatePress();
+            });
+
+            function animate3D() {
+                requestAnimationFrame(animate3D);
+                controls.update();
+                renderer.render(scene, camera);
+            }
+            animate3D();
+
+            window.addEventListener('resize', () => {
+                camera.aspect = container.clientWidth / container.clientHeight;
+                camera.updateProjectionMatrix();
+                renderer.setSize(container.clientWidth, container.clientHeight);
+            });
+            
+            // --- Lógica do Quiz ---
+            setupQuiz();
+
+        });
+
+        // --- Funções do Quiz ---
+        function setupQuiz() {
+            const quizData = {
+                phase1: [
+                    { q: "Qual o principal objetivo do projeto TCC? 🎯", o: ["Criar uma prensa mais rápida", "Desenvolver uma prensa de baixo custo", "Automatizar a fabricação"], a: 1 },
+                    { q: "A prensa manual proposta elimina a necessidade de qual equipamento? 🔌", o: ["Furadeira de bancada", "Compressor de ar", "Torno mecânico"], a: 1 },
+                    { q: "Qual material foi sugerido para a Estrutura Principal? 🏗️", o: ["Aço Inox", "Alumínio", "Aço Carbono 1020"], a: 2 },
+                    { q: "O custo operacional (energia) da prensa manual é: ⚡", o: ["Alto", "Médio", "Nulo"], a: 2 },
+                    { q: "Qual o custo de fabricação estimado do protótipo? 💰", o: ["R$ 1.560,00", "R$ 2.500,00", "R$ 3.500,00"], a: 0 },
+                    { q: "O mecanismo de acionamento combina uma alavanca com um... ⚙️", o: ["Pistão hidráulico", "Motor de passo", "Fuso de rosca"], a: 2 },
+                    { q: "Um dos benefícios esperados é a sustentabilidade. Por quê? 🌱", o: ["Usa materiais reciclados", "Não consome energia elétrica", "É biodegradável"], a: 1 },
+                    { q: "Qual norma de segurança foi mencionada no projeto? 👷", o: ["NR10", "NR12", "NR35"], a: 1 },
+                    { q: "Para que serve a cobertura de borracha na base e plataforma? 👟", o: ["Aumentar a pressão", "Proteger o calçado", "Diminuir o ruído"], a: 1 },
+                    { q: "Comparado às opções de mercado, o custo do projeto é até ___ menor.", o: ["10%", "25%", "40%"], a: 2 },
+                ],
+                phase2: [
+                    { q: "Qual a etapa mais cara na mão de obra do protótipo? 💸", o: ["Soldagem", "Pintura", "Usinagem"], a: 2 },
+                    { q: "O fuso é feito de Aço 1045 por sua alta resistência a... 💪", o: ["Corrosão", "Desgaste e tração", "Temperaturas elevadas"], a: 1 },
+                    { q: "Qual componente garante baixo atrito e durabilidade? ✨", o: ["Parafusos", "Mancais e Buchas", "Estrutura principal"], a: 1 },
+                    { q: "A estrutura principal tem um formato que lembra a letra... 🧐", o: ["'H'", "'C'", "'L'"], a: 1 },
+                    { q: "Qual a principal vantagem da prensa pneumática sobre a manual? 💨", o: ["Menor custo de aquisição", "Maior força e menor esforço", "Não precisa de manutenção"], a: 1 },
+                    { q: "No gráfico de pizza, qual fatia representa o maior custo do protótipo? 🍕", o: ["Material", "Mão de Obra", "Consumíveis"], a: 1 },
+                    { q: "A duração estimada para 'Montagem e testes' foi de... ⏳", o: ["1 semana", "2 semanas", "4 semanas"], a: 1 },
+                    { q: "Qual o nome do autor do TCC? ✍️", o: ["Vicente Chiaverini", "Gustavo A. de Oliveira", "Sarkis Melconian"], a: 1 },
+                    { q: "Qual a profundidade total aproximada da prensa? 📏", o: ["300 mm", "400 mm", "600 mm"], a: 1 },
+                    { q: "O projeto é voltado principalmente para... 🏭", o: ["Grandes indústrias", "Pequenos e médios produtores", "Hobbyistas"], a: 1 },
+                ],
+                phase3: [
+                    { q: "O que é uma rosca trapezoidal, usada no fuso? 🔩", o: ["Rosca para madeira", "Rosca para altas velocidades", "Rosca para transmitir movimento e força"], a: 2 },
+                    { q: "No gráfico Radar, em qual quesito o 'Projeto TCC' supera a 'Pneumática'? 🏆", o: ["Complexidade", "Custo Operacional", "Todos os quesitos avaliados"], a: 1 },
+                    { q: "Por que o Poliacetal é uma alternativa ao Bronze para as buchas? 🤔", o: ["É mais pesado", "É um polímero de engenharia com baixo atrito", "É mais resistente ao calor"], a: 1 },
+                    { q: "Qual a desvantagem principal do protótipo TCC? 👎", o: ["Requer fabricação", "Custo elevado", "Manutenção complexa"], a: 0 },
+                    { q: "A etapa de 'Usinagem' envolve qual profissional? 🛠️", o: ["Soldador", "Torneiro Mecânico", "Pintor"], a: 1 },
+                    { q: "Qual a altura total aproximada da prensa? ↕️", o: ["400 mm", "500 mm", "600 mm"], a: 2 },
+                    { q: "No comparativo, qual tipo de prensa tem o maior custo total (aquisição + operação)? 📈", o: ["Manual (Mercado)", "Projeto TCC", "Pneumática (Mercado)"], a: 2 },
+                    { q: "O que significa a sigla SENAI? 📚", o: ["Sistema Nacional de Apoio Industrial", "Serviço Nacional de Aprendizagem Industrial", "Sindicato Nacional da Indústria"], a: 1 },
+                    { q: "A alavanca multiplica a força do operador. Isso é um princípio de... ⚛️", o: ["Termodinâmica", "Eletromagnetismo", "Mecânica (alavancagem)"], a: 2 },
+                    { q: "O projeto visa resolver um problema da indústria de... 👢", o: ["Móveis", "Calçados", "Automóveis"], a: 1 }
+                ]
+            };
+            
+            let currentPhase = 1;
+            let currentQuestionIndex = 0;
+            let score = 0;
+            let questions = [];
+            let userAnswers = {};
+
+            const startScreen = document.getElementById('quiz-start-screen');
+            const mainScreen = document.getElementById('quiz-main-screen');
+            const endPhaseScreen = document.getElementById('quiz-end-phase-screen');
+            const startBtn = document.getElementById('start-quiz-btn');
+            const nextBtn = document.getElementById('quiz-next-btn');
+            const prevBtn = document.getElementById('quiz-prev-btn');
+
+            startBtn.addEventListener('click', () => {
+                startPhase(currentPhase);
+            });
+            
+            nextBtn.addEventListener('click', () => {
+                currentQuestionIndex++;
+                if (currentQuestionIndex >= questions.length) {
+                    endPhase();
+                } else {
+                    displayQuestion();
+                }
+            });
+            
+            prevBtn.addEventListener('click', () => {
+                if (currentQuestionIndex > 0) {
+                    currentQuestionIndex--;
+                    displayQuestion();
+                }
+            });
+
+            function shuffle(array) {
+                for (let i = array.length - 1; i > 0; i--) {
+                    const j = Math.floor(Math.random() * (i + 1));
+                    [array[i], array[j]] = [array[j], array[i]];
+                }
+            }
+
+            function startPhase(phase) {
+                currentPhase = phase;
+                currentQuestionIndex = 0;
+                score = 0;
+                userAnswers = {};
+                questions = [...quizData[`phase${phase}`]];
+                shuffle(questions);
+                
+                startScreen.classList.add('hidden');
+                endPhaseScreen.classList.add('hidden');
+                mainScreen.classList.remove('hidden');
+
+                document.getElementById('quiz-phase').textContent = `Fase ${phase}`;
+                displayQuestion();
+            }
+
+            function displayQuestion() {
+                const q = questions[currentQuestionIndex];
+                const quizBox = document.getElementById('quiz-box');
+                
+                let optionsHtml = q.o.map((option, index) =>
+                    `<div class="quiz-option p-4 rounded-lg border-2 border-gray-200" data-index="${index}">${option}</div>`
+                ).join('');
+
+                quizBox.innerHTML = `<div>
+                    <h4 class="text-xl font-bold mb-6">${currentQuestionIndex + 1}. ${q.q}</h4>
+                    <div class="space-y-3">${optionsHtml}</div>
+                </div>`;
+                
+                updateProgress();
+                attachOptionListeners();
+
+                if (userAnswers[currentQuestionIndex] !== undefined) {
+                    showAnswer(userAnswers[currentQuestionIndex]);
+                }
+                
+                prevBtn.disabled = currentQuestionIndex === 0;
+                nextBtn.textContent = (currentQuestionIndex === questions.length - 1) ? 'Finalizar Fase' : 'Prosseguir';
+            }
+
+            function attachOptionListeners() {
+                document.querySelectorAll('.quiz-option').forEach(el => {
+                    el.addEventListener('click', () => {
+                        if (userAnswers[currentQuestionIndex] === undefined) {
+                            const selectedIndex = parseInt(el.dataset.index);
+                            userAnswers[currentQuestionIndex] = selectedIndex;
+                            if (selectedIndex === questions[currentQuestionIndex].a) {
+                                score++;
+                            }
+                            showAnswer(selectedIndex);
+                        }
+                    });
+                });
+            }
+
+            function showAnswer(selectedIndex) {
+                const q = questions[currentQuestionIndex];
+                document.querySelectorAll('.quiz-option').forEach((el, index) => {
+                    el.classList.add('pointer-events-none'); // Disable further clicks
+                    if (index === q.a) {
+                        el.classList.add('correct');
+                    } else if (index === selectedIndex) {
+                        el.classList.add('incorrect');
+                    }
+                });
+                document.getElementById('quiz-score').textContent = `Pontos: ${score}`;
+            }
+
+            function updateProgress() {
+                const progress = ((currentQuestionIndex + 1) / questions.length) * 100;
+                document.getElementById('progress-bar-inner').style.width = `${progress}%`;
+            }
+
+            function endPhase() {
+                mainScreen.classList.add('hidden');
+                endPhaseScreen.classList.remove('hidden');
+                
+                const percentage = Math.round((score / questions.length) * 100);
+                const passed = percentage >= 70;
+
+                document.getElementById('end-phase-title').textContent = `Fim da Fase ${currentPhase}!`;
+                document.getElementById('end-phase-message').textContent = `Você acertou ${score} de ${questions.length} (${percentage}%).`;
+                document.getElementById('end-phase-icon').textContent = passed ? '🎉' : '😥';
+                const actionBtn = document.getElementById('end-phase-action-btn');
+
+                if (passed) {
+                    if (currentPhase < 3) {
+                        actionBtn.textContent = `Ir para Fase ${currentPhase + 1}`;
+                        actionBtn.onclick = () => startPhase(currentPhase + 1);
+                    } else {
+                        actionBtn.textContent = 'Parabéns! Você completou o desafio!';
+                        actionBtn.onclick = () => startPhase(1); // Restart from phase 1
+                    }
+                } else {
+                    actionBtn.textContent = `Tentar Fase ${currentPhase} Novamente`;
+                    actionBtn.onclick = () => startPhase(currentPhase);
+                }
+            }
+        }
+        
+        // --- Lógica da Seção de Comentários ---
+        function setupComments() {
+            const commentForm = document.getElementById('comment-form');
+            const commentsList = document.getElementById('comments-list');
+            const commentsKey = 'tccComments';
+
+            const loadComments = () => {
+                const comments = JSON.parse(localStorage.getItem(commentsKey)) || [];
+                commentsList.innerHTML = '';
+                comments.forEach(comment => {
+                    const commentEl = document.createElement('div');
+                    commentEl.classList.add('bg-white', 'p-4', 'rounded-lg', 'shadow');
+                    commentEl.innerHTML = `<p class="font-bold text-senai-blue">${comment.name}</p><p class="text-gray-600 mt-1">${comment.text}</p><p class="text-xs text-gray-400 text-right mt-2">${new Date(comment.date).toLocaleString('pt-BR')}</p>`;
+                    commentsList.prepend(commentEl);
+                });
+            };
+
+            commentForm.addEventListener('submit', (e) => {
+                e.preventDefault();
+                const comments = JSON.parse(localStorage.getItem(commentsKey)) || [];
+                const newComment = {
+                    name: document.getElementById('comment-name').value,
+                    text: document.getElementById('comment-text').value,
+                    date: new Date()
+                };
+                comments.push(newComment);
+                localStorage.setItem(commentsKey, JSON.stringify(comments));
+                commentForm.reset();
+                loadComments();
+            });
+            loadComments();
+        }
+        setupComments();
+
+    </script>
+</body>
+</html>
+
